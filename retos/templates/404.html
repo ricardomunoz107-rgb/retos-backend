@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Ruta No Encontrada</title>
+    <link rel="stylesheet" href="{% static 'retos/css/style.css' %}">
+</head>
+<body>
+
+    <main class="error-container">
+        <h1 class="error-code">404</h1>
+        <h2>¡Reto o Ruta Desconocida!</h2>
+        <p style="color: var(--text-secondary);">
+            La dirección a la que intentas acceder no existe en el sistema de la Plataforma de Retos.
+        </p>
+        <a href="/" class="btn-home">Volver al Dashboard</a>
+    </main>
+
+</body>
+</html>

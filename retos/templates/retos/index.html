@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ nombre_plataforma }}</title>
+    <link rel="stylesheet" href="{% static 'retos/css/style.css' %}">
+</head>
+<body>
+
+    <header>
+        <h1>⚡ {{ nombre_plataforma }}</h1>
+        <span class="status-badge">
+            {% if activa %}● Sistema En Línea{% else %}○ En Mantenimiento{% endif %}
+        </span>
+    </header>
+
+    <main>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total de Desafíos</h3>
+                <p>{{ total_retos }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Puntaje Acumulado</h3>
+                <p>{{ suma_puntos }} pts</p>
+            </div>
+            <div class="stat-card">
+                <h3>Promedio de Puntos</h3>
+                <p>{{ promedio_puntos }} pts</p>
+            </div>
+        </div>
+
+        <section class="challenges-section">
+            <h2>Desafíos Disponibles</h2>
+            <div class="challenge-list">
+                {% for reto in retos %}
+                    <div class="challenge-card">
+                        <span class="challenge-title">#{{ reto.id }} - {{ reto.titulo }}</span>
+                        <div>
+                            <span class="badge badge-{{ reto.dificultad }}">{{ reto.dificultad }}</span>
+                            <span style="margin-left: 10px; color: var(--text-secondary);">{{ reto.puntos }} pts</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="folders-section">
+            <h2>Carpetas del proyecto <span class="folder-count">{{ carpetas|length }}</span></h2>
+            <div class="folder-list">
+                {% for carpeta in carpetas %}
+                    <div class="folder-card">
+                        <span class="folder-icon" aria-hidden="true">📁</span>
+                        <span>{{ carpeta }}</span>
+                    </div>
+                {% empty %}
+                    <p class="empty-state">No hay carpetas para mostrar.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+</body>
+</html>
