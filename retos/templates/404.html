@@ -8,15 +8,27 @@
     <link rel="stylesheet" href="{% static 'retos/css/style.css' %}">
 </head>
 <body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ir al inicio">
+            <span class="brand-mark">R</span>
+            <span>retos<span class="brand-dot">.</span></span>
+        </a>
+        <a class="nav-link" href="/">Volver al inicio</a>
+    </header>
 
     <main class="error-container">
-        <h1 class="error-code">404</h1>
-        <h2>¡Reto o Ruta Desconocida!</h2>
-        <p style="color: var(--text-secondary);">
-            La dirección a la que intentas acceder no existe en el sistema de la Plataforma de Retos.
-        </p>
-        <a href="/" class="btn-home">Volver al Dashboard</a>
+        <div class="error-illustration" aria-hidden="true">
+            <span>4</span><span class="error-zero">0</span><span>4</span>
+        </div>
+        <p class="eyebrow">ERROR DE NAVEGACIÓN</p>
+        <h1>Este reto todavía no existe.</h1>
+        <p class="error-text">La dirección que buscas no está disponible o pudo haberse movido. Regresa al dashboard y continúa practicando.</p>
+        <a href="/" class="primary-button">Volver al dashboard <span aria-hidden="true">→</span></a>
     </main>
 
+    <footer class="site-footer">
+        <span>© 2026 retos.</span>
+        <span>Un camino, muchos desafíos.</span>
+    </footer>
 </body>
 </html>
