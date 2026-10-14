@@ -14,8 +14,8 @@
             <span>retos<span class="brand-dot">.</span></span>
         </a>
         <nav class="top-nav" aria-label="Navegación principal">
+            <a class="nav-link" href="{% url 'jugar' %}">Jugar retos</a>
             <a class="nav-link active" href="#desafios">Desafíos</a>
-            <a class="nav-link" href="#proyecto">Proyecto</a>
             <span class="status-badge">
                 <span class="status-dot"></span>
                 {% if activa %}En línea{% else %}Mantenimiento{% endif %}
@@ -29,7 +29,7 @@
                 <p class="eyebrow">PLATAFORMA DE APRENDIZAJE</p>
                 <h1>Convierte cada reto en una nueva habilidad.</h1>
                 <p class="hero-text">Practica, resuelve y construye tu camino como desarrollador con desafíos pensados para aprender haciendo.</p>
-                <a class="primary-button" href="#desafios">Explorar desafíos <span aria-hidden="true">→</span></a>
+                <a class="primary-button" href="{% url 'jugar' %}">Jugar retos <span aria-hidden="true">→</span></a>
             </div>
             <div class="hero-art" aria-hidden="true">
                 <span class="code-line line-one">const</span>
@@ -70,45 +70,24 @@
             </div>
             <div class="challenge-list">
                 {% for reto in retos %}
-                    <div class="challenge-card">
-                        <span class="challenge-number">0{{ reto.id }}</span>
+                    <a class="challenge-card challenge-link" href="{% url 'detalle_reto' reto.id %}">
+                        <span class="challenge-number">{{ forloop.counter|stringformat:"02d" }}</span>
                         <div class="challenge-info">
                             <span class="challenge-title">{{ reto.titulo }}</span>
                             <span class="challenge-subtitle">Reto de programación</span>
                         </div>
                         <div class="challenge-meta">
-                            <span class="badge badge-{{ reto.dificultad }}">{{ reto.dificultad }}</span>
+                            <span class="badge badge-{{ reto.get_dificultad_display }}">{{ reto.get_dificultad_display }}</span>
                             <span class="points">{{ reto.puntos }} pts</span>
                             <span class="arrow" aria-hidden="true">→</span>
                         </div>
-                    </div>
+                    </a>
                 {% empty %}
                     <p class="empty-state">Pronto habrá nuevos desafíos.</p>
                 {% endfor %}
             </div>
         </section>
 
-        <section class="content-section project-section" id="proyecto">
-            <div class="section-heading">
-                <div>
-                    <p class="eyebrow">ESTRUCTURA</p>
-                    <h2>Carpetas del proyecto</h2>
-                </div>
-                <span class="section-count">{{ carpetas|length }} carpetas</span>
-            </div>
-            <p class="section-description">Explora los módulos principales que dan vida a esta aplicación Django.</p>
-            <div class="folder-list">
-                {% for carpeta in carpetas %}
-                    <div class="folder-card">
-                        <span class="folder-icon" aria-hidden="true">⌁</span>
-                        <span class="folder-name">{{ carpeta }}</span>
-                        <span class="folder-arrow" aria-hidden="true">↗</span>
-                    </div>
-                {% empty %}
-                    <p class="empty-state">No hay carpetas para mostrar.</p>
-                {% endfor %}
-            </div>
-        </section>
     </main>
 
     <footer class="site-footer">
