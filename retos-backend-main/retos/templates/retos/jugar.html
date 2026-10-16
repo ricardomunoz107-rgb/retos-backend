@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jugar retos | retos.</title>
+    <link rel="stylesheet" href="{% static 'retos/css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ir al inicio">
+            <span class="brand-mark">R</span>
+            <span>retos<span class="brand-dot">.</span></span>
+        </a>
+        <nav class="top-nav" aria-label="Navegación principal">
+            <a class="nav-link" href="/">Inicio</a>
+            <span class="status-badge"><span class="status-dot"></span>Zona de práctica</span>
+        </nav>
+    </header>
+
+    <main class="page-shell play-shell">
+        <section class="play-hero">
+            <p class="eyebrow">PRACTICA Y SUMA PUNTOS</p>
+            <h1>Un reto a la vez.</h1>
+            <p>Elige un reto, escribe un programa Python básico y acumula puntos. Cada reto suma una sola vez por jugador.</p>
+        </section>
+
+        {% if messages %}
+            <section class="message-list" aria-live="polite">
+                {% for message in messages %}
+                    <p class="message message-{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <section class="player-summary">
+            <form class="player-form" method="get" action="{% url 'jugar' %}">
+                <label for="player-name">Tu nombre para guardar el progreso</label>
+                <div class="player-form-row">
+                    <input id="player-name" type="text" name="usuario" maxlength="80" value="{{ usuario }}" placeholder="Ej. Ricardo" autocomplete="nickname">
+                    <button class="play-button" type="submit">Ver mi puntaje</button>
+                </div>
+            </form>
+            {% if usuario %}
+                <div class="player-score">
+                    <span class="score-label">Puntaje de {{ usuario }}</span>
+                    <strong>{{ puntos_usuario }} pts</strong>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="play-layout">
+            <div class="play-challenges">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">DESAFÍOS DISPONIBLES</p>
+                        <h2>Elige tu próximo reto</h2>
+                    </div>
+                    <span class="section-count">{{ total_retos }} retos</span>
+                </div>
+
+                {% for grupo in retos_por_dificultad %}
+                    <section class="difficulty-group">
+                        <h3 class="difficulty-heading">{{ grupo.nombre }} <span>{{ grupo.retos|length }} retos</span></h3>
+                        {% for reto in grupo.retos %}
+                            <article class="play-card">
+                                <div class="play-card-heading">
+                                    <div>
+                                        <span class="badge badge-{{ reto.get_dificultad_display }}">{{ reto.get_dificultad_display }}</span>
+                                        <h3>{{ reto.titulo }}</h3>
+                                    </div>
+                                    <span class="play-points">{{ reto.puntos }} pts</span>
+                                </div>
+                                <p class="play-prompt">{{ reto.descripcion|linebreaksbr }}</p>
+                                {% if reto.id in retos_completados %}<p class="solved-label">✓ Reto completado</p>{% endif %}
+                                <a class="play-button play-link" href="{% url 'detalle_reto' reto.id %}{% if usuario %}?usuario={{ usuario|urlencode }}{% endif %}">
+                                    {% if reto.id in retos_completados %}Ver reto{% else %}Resolver reto{% endif %}
+                                </a>
+                            </article>
+                        {% empty %}
+                            <p class="empty-state">Todavía no hay retos de esta dificultad.</p>
+                        {% endfor %}
+                    </section>
+                {% empty %}
+                    <p class="empty-state">Todavía no hay retos activos. Vuelve pronto.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="participant-register" aria-labelledby="register-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">ACTIVIDAD GUARDADA</p>
+                    <h2 id="register-heading">Registro de participantes</h2>
+                </div>
+                <span class="section-count">{{ registro_participantes|length }} participantes</span>
+            </div>
+            <p class="section-description">Se muestra la última actividad registrada por participante. La hora está expresada en UTC.</p>
+            <div class="register-table-wrap">
+                <table class="register-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Participante</th>
+                            <th scope="col">Última actividad (UTC)</th>
+                            <th scope="col">Ejercicios resueltos</th>
+                            <th scope="col">Puntos obtenidos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for participante in registro_participantes %}
+                            <tr>
+                                <th scope="row">{{ participante.usuario }}</th>
+                                <td>{{ participante.ultima_actividad|date:"d/m/Y H:i" }}</td>
+                                <td>{{ participante.ejercicios }}</td>
+                                <td><strong>{{ participante.puntos }} pts</strong></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="empty-state">Todavía no hay intentos registrados.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <span>© 2026 retos.</span>
+        <a href="/">Volver al inicio</a>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ nombre_plataforma }}</title>
+    <link rel="stylesheet" href="{% static 'retos/css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ir al inicio">
+            <span class="brand-mark">R</span>
+            <span>retos<span class="brand-dot">.</span></span>
+        </a>
+        <nav class="top-nav" aria-label="Navegación principal">
+            <a class="nav-link" href="{% url 'jugar' %}">Jugar retos</a>
+            <a class="nav-link active" href="#desafios">Desafíos</a>
+            <span class="status-badge">
+                <span class="status-dot"></span>
+                {% if activa %}En línea{% else %}Mantenimiento{% endif %}
+            </span>
+        </nav>
+    </header>
+
+    <main class="page-shell">
+        <section class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">PLATAFORMA DE APRENDIZAJE</p>
+                <h1>Convierte cada reto en una nueva habilidad.</h1>
+                <p class="hero-text">Practica, resuelve y construye tu camino como desarrollador con desafíos pensados para aprender haciendo.</p>
+                <a class="primary-button" href="{% url 'jugar' %}">Jugar retos <span aria-hidden="true">→</span></a>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+                <span class="code-line line-one">const</span>
+                <span class="code-line line-two">aprendizaje =</span>
+                <span class="code-line line-three">retos + practica</span>
+                <span class="code-cursor"></span>
+            </div>
+        </section>
+
+        <section class="stats-grid" aria-label="Resumen de la plataforma">
+            <div class="stat-card">
+                <span class="stat-icon icon-blue">#</span>
+                <h3>Total de Desafíos</h3>
+                <p>{{ total_retos }}</p>
+                <span class="stat-note">disponibles ahora</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon icon-purple">✦</span>
+                <h3>Puntaje Acumulado</h3>
+                <p>{{ suma_puntos }} pts</p>
+                <span class="stat-note">por completar</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon icon-orange">↗</span>
+                <h3>Promedio de Puntos</h3>
+                <p>{{ promedio_puntos|floatformat:1 }} pts</p>
+                <span class="stat-note">por desafío</span>
+            </div>
+        </section>
+
+        <section class="content-section" id="desafios">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">SIGUIENTE PASO</p>
+                    <h2>Desafíos Disponibles</h2>
+                </div>
+                <span class="section-count">{{ total_retos }} retos</span>
+            </div>
+            <div class="challenge-list">
+                {% for reto in retos %}
+                    <a class="challenge-card challenge-link" href="{% url 'detalle_reto' reto.id %}">
+                        <span class="challenge-number">{{ forloop.counter|stringformat:"02d" }}</span>
+                        <div class="challenge-info">
+                            <span class="challenge-title">{{ reto.titulo }}</span>
+                            <span class="challenge-subtitle">Reto de programación</span>
+                        </div>
+                        <div class="challenge-meta">
+                            <span class="badge badge-{{ reto.get_dificultad_display }}">{{ reto.get_dificultad_display }}</span>
+                            <span class="points">{{ reto.puntos }} pts</span>
+                            <span class="arrow" aria-hidden="true">→</span>
+                        </div>
+                    </a>
+                {% empty %}
+                    <p class="empty-state">Pronto habrá nuevos desafíos.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <span>© 2026 retos.</span>
+        <span>Aprender. Resolver. Crecer.</span>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ reto.titulo }} | retos.</title>
+    <link rel="stylesheet" href="{% static 'retos/css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ir al inicio">
+            <span class="brand-mark">R</span>
+            <span>retos<span class="brand-dot">.</span></span>
+        </a>
+        <nav class="top-nav" aria-label="Navegación principal">
+            <a class="nav-link" href="{% url 'jugar' %}{% if usuario %}?usuario={{ usuario|urlencode }}{% endif %}">Todos los retos</a>
+            <a class="nav-link" href="/">Inicio</a>
+        </nav>
+    </header>
+
+    <main class="page-shell solve-shell">
+        <a class="back-link" href="{% url 'jugar' %}{% if usuario %}?usuario={{ usuario|urlencode }}{% endif %}">← Volver a elegir reto</a>
+
+        {% if messages %}
+            <section class="message-list" aria-live="polite">
+                {% for message in messages %}
+                    <p class="message message-{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <section class="solve-card">
+            <div class="solve-heading">
+                <div>
+                    <span class="badge badge-{{ reto.get_dificultad_display }}">{{ reto.get_dificultad_display }}</span>
+                    <h1>{{ reto.titulo }}</h1>
+                </div>
+                <span class="play-points">{{ reto.puntos }} pts</span>
+            </div>
+
+            <div class="problem-statement">
+                <p class="eyebrow">ENUNCIADO</p>
+                <p>{{ reto.descripcion|linebreaksbr }}</p>
+            </div>
+
+            <div class="editor-help">
+                <strong>Python básico permitido</strong>
+                <p>Usa variables, operaciones, <code>if</code>, ciclos <code>for</code> con <code>range()</code> y <code>print()</code>. También puedes usar <code>len()</code>, <code>abs()</code>, <code>min()</code> y <code>max()</code>. Por seguridad, no se permiten imports, archivos, red ni otras funciones.</p>
+            </div>
+
+            {% if completado %}
+                <div class="solved-panel">
+                    <p class="solved-label">✓ Ya completaste este reto.</p>
+                    <p>Tu puntaje guardado es <strong>{{ puntos_usuario }} pts</strong>.</p>
+                </div>
+            {% else %}
+                <form method="post" action="{% url 'resolver_reto' reto.id %}" class="code-form">
+                    {% csrf_token %}
+                    <label for="player-name">Tu nombre</label>
+                    <input id="player-name" type="text" name="usuario" maxlength="80" value="{{ usuario }}" placeholder="Ej. Ricardo" autocomplete="nickname" required>
+
+                    <label for="source-code">Tu solución en Python</label>
+                    <textarea id="source-code" name="codigo_fuente" rows="11" maxlength="2000" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Escribe tu código aquí" required></textarea>
+                    <p class="editor-note">El código se valida con un intérprete limitado; no se ejecuta Python arbitrario en el servidor.</p>
+                    <button class="play-button" type="submit">Ejecutar y comprobar</button>
+                </form>
+            {% endif %}
+        </section>
+
+        {% if usuario %}
+            <p class="score-footnote">Puntaje total de {{ usuario }}: <strong>{{ puntos_usuario }} pts</strong></p>
+        {% endif %}
+    </main>
+
+    <footer class="site-footer">
+        <span>© 2026 retos.</span>
+        <a href="/">Volver al inicio</a>
+    </footer>
+</body>
+</html>
