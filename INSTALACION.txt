@@ -51,10 +51,15 @@ python manage.py createsuperuser
 8. Ejecutar pruebas y levantar el servidor
 -------------------------------------------
 python manage.py test
-python manage.py runserver
+python manage.py runserver 127.0.0.1:3000
 
 Abrir en el navegador:
-http://127.0.0.1:8000/
+http://127.0.0.1:3000/
+Administracion:
+http://127.0.0.1:3000/admin/
+
+Usa el puerto 3000 para conectarte a PostgreSQL. El puerto 8000 puede apuntar
+a una base SQLite antigua y no compartir la cuenta administrativa.
 
 Inicia sesion en /admin/ con el usuario administrador para acceder al CRUD web:
 /gestion/categorias/
@@ -63,7 +68,7 @@ Inicia sesion en /admin/ con el usuario administrador para acceder al CRUD web:
 /gestion/envios/
 
 Para que otros equipos de la misma red puedan verlo:
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:3000
 
 Antes de compartir el servidor, agrega la IP o el nombre del equipo a
 ALLOWED_HOSTS en .env.

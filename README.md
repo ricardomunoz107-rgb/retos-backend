@@ -28,8 +28,13 @@ psql -U postgres -d postgres -f scripts\create_user.sql
 # Edita .env con la contraseña que psql te pidió.
 python manage.py migrate
 python manage.py createsuperuser
-python manage.py runserver
+python manage.py runserver 127.0.0.1:3000
 ```
+
+Abre el proyecto y Django Admin en `http://127.0.0.1:3000/` y
+`http://127.0.0.1:3000/admin/`. Este puerto usa la PostgreSQL configurada en
+`.env`; el servidor antiguo en el puerto `8000` puede seguir conectado a la
+base SQLite de respaldo y no compartir la cuenta administrativa.
 
 En Linux o macOS, activa el entorno con `source .venv/bin/activate`. El archivo
 `.env` es local y está excluido de Git. La plantilla `.env.example` configura
@@ -125,7 +130,7 @@ SQLite directamente, por lo que Django y su base de datos actual no se modifican
 Se necesita PHP CLI y la extensión PHP cURL habilitada.
 
 1. En una terminal, inicia Django desde la carpeta del proyecto:
-   `python manage.py runserver`.
+   `python manage.py runserver 127.0.0.1:3000`.
 2. En una segunda terminal, desde la misma carpeta, configura las credenciales
    de un usuario creado con `python manage.py createsuperuser` y arranca el
    servidor de desarrollo de PHP:
