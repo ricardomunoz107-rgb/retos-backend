@@ -587,6 +587,17 @@ class DemoCRUDDataTests(TestCase):
             3,
         )
 
+    def test_extended_demo_activity_populates_the_public_participant_register(self):
+        self.assertEqual(Envio.objects.count(), 13)
+        self.assertEqual(RetoResuelto.objects.count(), 8)
+
+        response = self.client.get(reverse("jugar"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["registro_participantes"]), 13)
+        self.assertContains(response, "Felipe Reyes")
+        self.assertContains(response, "María Paz")
+
     def test_management_lists_show_details_for_demo_records(self):
         admin = get_user_model().objects.create_superuser(
             username="demo-list-admin",

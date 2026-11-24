@@ -79,9 +79,11 @@ el puntaje en `RetoResuelto`, con una recompensa por reto y nombre de jugador.
 Doce retos de práctica (cuatro por nivel de dificultad) se cargan automáticamente
 con las migraciones. El nombre es
 un identificador para la tabla de posiciones, no una cuenta autenticada.
-La migración `0006_seed_demo_records` agrega categorías, envíos y retos resueltos
-de ejemplo para mostrar los listados de gestión; las acciones CRUD modifican los
-registros guardados en la base activa.
+Las migraciones `0006_seed_demo_records` y
+`0007_seed_extended_demo_activity` agregan categorías, retos resueltos y envíos
+de ejemplo para que los listados de gestión y el registro público de participantes
+tengan datos visibles; las acciones CRUD modifican los registros guardados en la
+base activa.
 
 Las lecturas de categorías, retos y retos resueltos son públicas. Las operaciones
 de escritura requieren permisos de administrador; el endpoint de envíos requiere
