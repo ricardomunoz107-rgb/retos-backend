@@ -1,0 +1,57 @@
+{% extends "retos/crud/base.html" %}
+
+{% block title %}{{ section_title }}{% endblock %}
+
+{% block content %}
+    <section class="crud-heading">
+        <div>
+            <p class="eyebrow">GESTIÓN DE DATOS</p>
+            <h1>{{ section_title }}</h1>
+            <p class="crud-description">Consulta, crea y administra los registros de {{ section_title|lower }}.</p>
+        </div>
+        <a class="crud-button primary" href="{% url create_url_name %}">Crear {{ model_label|lower }}</a>
+    </section>
+
+    <section class="crud-panel" aria-label="Listado de {{ section_title|lower }}">
+        <div class="crud-panel-heading">
+            <h2>Registros</h2>
+            <span>{{ object_list|length }} en total</span>
+        </div>
+        {% if object_list %}
+            <div class="register-table-wrap">
+                <table class="register-table">
+                    <thead>
+                        <tr>
+                            {% for column in list_columns %}<th scope="col">{{ column }}</th>{% endfor %}
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in list_rows %}
+                            <tr>
+                                {% for value in row.values %}
+                                    <td>
+                                        {% if forloop.first %}
+                                            <a class="crud-record-name" href="{% url detail_url_name row.item.pk %}">{{ value }}</a>
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                                <td>
+                                    <div class="crud-actions">
+                                        <a class="crud-button secondary" href="{% url detail_url_name row.item.pk %}">Detalle</a>
+                                        <a class="crud-button secondary" href="{% url update_url_name row.item.pk %}">Editar</a>
+                                        <a class="crud-button danger" href="{% url delete_url_name row.item.pk %}">Eliminar</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-state">Todavía no hay registros. Puedes crear el primero.</p>
+        {% endif %}
+    </section>
+{% endblock %}

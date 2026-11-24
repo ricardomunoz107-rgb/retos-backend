@@ -32,10 +32,12 @@ python -m pip install -r requirements.txt
 
 5. Configurar el entorno local
 ------------------------------
+Si el archivo .env no existe:
 Copy-Item .env.example .env
 
 La plantilla usa SQLite. Para PostgreSQL, configura las variables DB_* en
-.env y prepara la base de datos con scripts\init_db.sql.
+.env y ejecuta con psql los scripts\create_database.sql y
+scripts\create_user.sql, en ese orden.
 
 6. Preparar la base de datos
 -----------------------------
@@ -44,6 +46,7 @@ python manage.py migrate
 7. Comprobar que el proyecto esta correcto
 --------------------------------------------
 python manage.py check
+python manage.py createsuperuser
 
 8. Ejecutar pruebas y levantar el servidor
 -------------------------------------------
@@ -52,6 +55,12 @@ python manage.py runserver
 
 Abrir en el navegador:
 http://127.0.0.1:8000/
+
+Inicia sesion en /admin/ con el usuario administrador para acceder al CRUD web:
+/gestion/categorias/
+/gestion/retos/
+/gestion/retos-resueltos/
+/gestion/envios/
 
 Para que otros equipos de la misma red puedan verlo:
 python manage.py runserver 0.0.0.0:8000
@@ -65,3 +74,5 @@ Importante:
 - El archivo .env contiene valores locales y no se sube a GitHub.
 - No cierres la terminal mientras el servidor este funcionando.
 - Detener el servidor: Ctrl+C
+- Para la evaluacion, guarda las capturas requeridas con URL y terminal en
+  evidencias_eva3.pdf junto al README.md.

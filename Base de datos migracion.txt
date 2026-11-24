@@ -1,0 +1,69 @@
+BASE DE DATOS Y MIGRACIONES - EVA 3
+====================================
+
+Motor: PostgreSQL 18
+Servidor: localhost
+Puerto de PostgreSQL: 5432
+Base: retos_db
+Esquema: public
+Configuracion local de conexion: archivo .env (no subir ni compartir)
+
+TABLAS DEL PROYECTO
+-------------------
+
+retos_categoria
+  id, nombre, descripcion
+  Guarda las categorias de los retos.
+
+retos_reto
+  id, titulo, descripcion, dificultad, puntos, activo, fecha_creacion,
+  categoria_id, respuesta_correcta
+  categoria_id relaciona el reto con retos_categoria.
+
+retos_retoresuelto
+  id, usuario, reto_id, puntos_obtenidos, fecha_resolucion
+  reto_id relaciona la resolucion con retos_reto.
+  Cada participante puede tener una sola resolucion por reto.
+
+retos_envio
+  id, reto_id, usuario, codigo_fuente, lenguaje, estado, fecha_envio
+  reto_id relaciona el envio con retos_reto.
+
+TABLAS DE DJANGO
+----------------
+
+auth_group, auth_group_permissions, auth_permission, auth_user,
+auth_user_groups, auth_user_user_permissions, django_admin_log,
+django_content_type, django_migrations y django_session.
+
+La cuenta de acceso al sitio se guarda en auth_user con su contraseña cifrada.
+La contraseña de la base de datos se configura localmente en .env; no se copia
+en este documento ni se debe subir al repositorio.
+
+DATOS DE DEMOSTRACION
+---------------------
+
+La migracion retos.0006_seed_demo_records agrega dos categorias de ejemplo,
+cinco envios y tres retos resueltos. Los doce retos de practica existentes se
+mantienen; los datos de demostracion no se ingresan manualmente en pgAdmin.
+
+El CRUD web guarda y edita los registros en PostgreSQL:
+  /gestion/categorias/
+  /gestion/retos/
+  /gestion/retos-resueltos/
+  /gestion/envios/
+
+Para consultar las tablas en pgAdmin:
+  Servers > Eva 3 > Databases > retos_db > Schemas > public > Tables
+
+MIGRACIONES
+-----------
+
+Crear migraciones cuando cambie la estructura de los modelos:
+  python manage.py makemigrations
+
+Aplicar migraciones y datos iniciales:
+  python manage.py migrate
+
+Consultar el estado:
+  python manage.py showmigrations

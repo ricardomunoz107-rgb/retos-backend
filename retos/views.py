@@ -1,16 +1,25 @@
 from urllib.parse import urlencode
 
+from django import forms
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.db.models import Avg, Sum
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from rest_framework import permissions, viewsets
 
+from .forms import CategoriaForm, EnvioForm, RetoForm, RetoResueltoForm
 from .models import Categoria, Envio, Reto, RetoResuelto
 from .reportes import obtener_registro_participantes
-from .serializers import CategoriaSerializer, EnvioSerializer, RetoSerializer
+from .serializers import (
+    CategoriaSerializer,
+    EnvioSerializer,
+    RetoResueltoSerializer,
+    RetoSerializer,
+)
 from .validadores import CodigoNoPermitido, ejecutar_codigo_restringido
 
 
@@ -30,6 +39,264 @@ class EnvioViewSet(viewsets.ModelViewSet):
     queryset = Envio.objects.all()
     serializer_class = EnvioSerializer
     permission_classes = [permissions.IsAdminUser]
+
+
+class RetoResueltoViewSet(viewsets.ModelViewSet):
+    queryset = RetoResuelto.objects.select_related("reto").all()
+    serializer_class = RetoResueltoSerializer
+    permission_classes = [permissions.DjangoModelPermissionsOrAnonReadOnly]
+
+
+class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    login_url = reverse_lazy("admin:login")
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class CRUDContextMixin:
+    model_label = ""
+    section_title = ""
+    route_prefix = ""
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "model_label": self.model_label,
+                "section_title": self.section_title,
+                "list_url_name": f"{self.route_prefix}-list",
+                "detail_url_name": f"{self.route_prefix}-detail",
+                "create_url_name": f"{self.route_prefix}-create",
+                "update_url_name": f"{self.route_prefix}-update",
+                "delete_url_name": f"{self.route_prefix}-delete",
+            }
+        )
+        return context
+
+class CRUDListView(AdminRequiredMixin, ListView):
+    template_name = "retos/crud/list.html"
+    ordering = "pk"
+
+    def get_queryset(self):
+        related_fields = [
+            field_name
+            for field_name, _ in self.list_fields
+            if self.model._meta.get_field(field_name).is_relation
+        ]
+        return super().get_queryset().select_related(*related_fields)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["list_columns"] = [label for _, label in self.list_fields]
+        context["list_rows"] = [
+            {
+                "item": item,
+                "values": [
+                    self._display_value(getattr(item, field_name))
+                    for field_name, _ in self.list_fields
+                ],
+            }
+            for item in context["object_list"]
+        ]
+        return context
+
+    @staticmethod
+    def _display_value(value):
+        if isinstance(value, bool):
+            return "Sí" if value else "No"
+        if value is None or value == "":
+            return "—"
+        return value
+
+
+class CRUDDetailView(AdminRequiredMixin, DetailView):
+    template_name = "retos/crud/detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["detail_rows"] = []
+        for field_name in self.detail_fields:
+            field = self.model._meta.get_field(field_name)
+            value = getattr(self.object, field_name)
+            if isinstance(value, bool):
+                value = "Sí" if value else "No"
+            elif value is None or value == "":
+                value = "—"
+            context["detail_rows"].append(
+                {"label": field.verbose_name.capitalize(), "value": value}
+            )
+        return context
+
+
+class CRUDCreateView(AdminRequiredMixin, CreateView):
+    template_name = "retos/crud/form.html"
+
+    def get_success_url(self):
+        return reverse(f"{self.route_prefix}-detail", kwargs={"pk": self.object.pk})
+
+
+class CRUDUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "retos/crud/form.html"
+
+    def get_success_url(self):
+        return reverse(f"{self.route_prefix}-detail", kwargs={"pk": self.object.pk})
+
+
+class CRUDDeleteView(AdminRequiredMixin, DeleteView):
+    template_name = "retos/crud/confirm_delete.html"
+
+    def get_form_class(self):
+        return forms.Form
+
+    def get_success_url(self):
+        return reverse(f"{self.route_prefix}-list")
+
+
+class CategoriaCRUDMixin(CRUDContextMixin):
+    model = Categoria
+    form_class = CategoriaForm
+    model_label = "Categoría"
+    section_title = "Categorías"
+    route_prefix = "gestion-categoria"
+    detail_fields = ["nombre", "descripcion"]
+    list_fields = [("nombre", "Nombre"), ("descripcion", "Descripción")]
+
+
+class CategoriaListView(CategoriaCRUDMixin, CRUDListView):
+    pass
+
+
+class CategoriaDetailView(CategoriaCRUDMixin, CRUDDetailView):
+    pass
+
+
+class CategoriaCreateView(CategoriaCRUDMixin, CRUDCreateView):
+    pass
+
+
+class CategoriaUpdateView(CategoriaCRUDMixin, CRUDUpdateView):
+    pass
+
+
+class CategoriaDeleteView(CategoriaCRUDMixin, CRUDDeleteView):
+    pass
+
+
+class RetoCRUDMixin(CRUDContextMixin):
+    model = Reto
+    form_class = RetoForm
+    model_label = "Reto"
+    section_title = "Retos"
+    route_prefix = "gestion-reto"
+    list_fields = [
+        ("titulo", "Título"),
+        ("categoria", "Categoría"),
+        ("dificultad", "Dificultad"),
+        ("puntos", "Puntos"),
+        ("activo", "Activo"),
+    ]
+    detail_fields = [
+        "titulo",
+        "descripcion",
+        "dificultad",
+        "puntos",
+        "activo",
+        "categoria",
+        "respuesta_correcta",
+        "fecha_creacion",
+    ]
+
+
+class RetoListView(RetoCRUDMixin, CRUDListView):
+    pass
+
+
+class RetoDetailView(RetoCRUDMixin, CRUDDetailView):
+    pass
+
+
+class RetoCreateView(RetoCRUDMixin, CRUDCreateView):
+    pass
+
+
+class RetoUpdateView(RetoCRUDMixin, CRUDUpdateView):
+    pass
+
+
+class RetoDeleteView(RetoCRUDMixin, CRUDDeleteView):
+    pass
+
+
+class RetoResueltoCRUDMixin(CRUDContextMixin):
+    model = RetoResuelto
+    form_class = RetoResueltoForm
+    model_label = "Reto resuelto"
+    section_title = "Retos resueltos"
+    route_prefix = "gestion-reto-resuelto"
+    list_fields = [
+        ("usuario", "Participante"),
+        ("reto", "Reto"),
+        ("puntos_obtenidos", "Puntos"),
+        ("fecha_resolucion", "Fecha de resolución"),
+    ]
+    detail_fields = ["usuario", "reto", "puntos_obtenidos", "fecha_resolucion"]
+
+
+class RetoResueltoListView(RetoResueltoCRUDMixin, CRUDListView):
+    pass
+
+
+class RetoResueltoDetailView(RetoResueltoCRUDMixin, CRUDDetailView):
+    pass
+
+
+class RetoResueltoCreateView(RetoResueltoCRUDMixin, CRUDCreateView):
+    pass
+
+
+class RetoResueltoUpdateView(RetoResueltoCRUDMixin, CRUDUpdateView):
+    pass
+
+
+class RetoResueltoDeleteView(RetoResueltoCRUDMixin, CRUDDeleteView):
+    pass
+
+
+class EnvioCRUDMixin(CRUDContextMixin):
+    model = Envio
+    form_class = EnvioForm
+    model_label = "Envío"
+    section_title = "Envíos"
+    route_prefix = "gestion-envio"
+    list_fields = [
+        ("usuario", "Participante"),
+        ("reto", "Reto"),
+        ("lenguaje", "Lenguaje"),
+        ("estado", "Estado"),
+        ("fecha_envio", "Fecha de envío"),
+    ]
+    detail_fields = ["reto", "usuario", "codigo_fuente", "lenguaje", "estado", "fecha_envio"]
+
+
+class EnvioListView(EnvioCRUDMixin, CRUDListView):
+    pass
+
+
+class EnvioDetailView(EnvioCRUDMixin, CRUDDetailView):
+    pass
+
+
+class EnvioCreateView(EnvioCRUDMixin, CRUDCreateView):
+    pass
+
+
+class EnvioUpdateView(EnvioCRUDMixin, CRUDUpdateView):
+    pass
+
+
+class EnvioDeleteView(EnvioCRUDMixin, CRUDDeleteView):
+    pass
 
 
 def home(request):

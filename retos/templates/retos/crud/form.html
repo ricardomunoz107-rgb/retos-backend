@@ -1,0 +1,29 @@
+{% extends "retos/crud/base.html" %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Crear{% endif %} {{ model_label|lower }}{% endblock %}
+
+{% block content %}
+    <a class="back-link" href="{% url list_url_name %}">← Volver a {{ section_title|lower }}</a>
+    <section class="crud-panel form-panel">
+        <p class="eyebrow">FORMULARIO DE GESTIÓN</p>
+        <h1>{% if form.instance.pk %}Editar{% else %}Crear{% endif %} {{ model_label|lower }}</h1>
+        <form method="post" class="crud-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+            {% for field in form %}
+                <div class="form-field{% if field.field.widget.input_type == 'checkbox' %} checkbox-field{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<small class="form-help">{{ field.help_text }}</small>{% endif %}
+                    {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                </div>
+            {% endfor %}
+            <div class="crud-actions">
+                <button class="crud-button primary" type="submit">Guardar</button>
+                <a class="crud-button secondary" href="{% url list_url_name %}">Cancelar</a>
+            </div>
+        </form>
+    </section>
+{% endblock %}

@@ -1,3 +1,5 @@
+from base64 import b64encode
+
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -94,6 +96,38 @@ class ApiTests(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["reto_titulo"], "Suma de arreglos")
 
+    def test_solved_challenge_endpoint_exposes_challenge_title(self):
+        category = Categoria.objects.create(nombre="Puntajes")
+        challenge = Reto.objects.create(
+            titulo="Reto puntuado",
+            descripcion="Comprueba el endpoint de retos resueltos.",
+            categoria=category,
+        )
+
+        response = self.client.post(
+            "/api/retos-resueltos/",
+            {
+                "reto": challenge.id,
+                "usuario": "estudiante",
+                "puntos_obtenidos": 10,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["reto_titulo"], "Reto puntuado")
+        self.assertEqual(self.client.get("/api/retos-resueltos/").status_code, 200)
+
+    def test_php_dashboard_can_read_public_data_and_authenticated_submissions(self):
+        self.client.force_authenticate(user=None)
+        for endpoint in ["/api/categorias/", "/api/retos/", "/api/retos-resueltos/"]:
+            with self.subTest(endpoint=endpoint):
+                self.assertEqual(self.client.get(endpoint).status_code, 200)
+
+        credentials = b64encode(b"admin:test-password").decode("ascii")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Basic {credentials}")
+        self.assertEqual(self.client.get("/api/envios/").status_code, 200)
+
     def test_challenge_api_requires_admin_to_prevent_answer_and_score_tampering(self):
         self.client.force_authenticate(user=None)
 
@@ -105,6 +139,127 @@ class ApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+
+class CRUDPageTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_superuser(
+            username="crud-admin",
+            email="crud-admin@example.com",
+            password="test-password",
+        )
+        self.category = Categoria.objects.create(
+            nombre="CRUD fundamentos",
+            descripcion="Categoría de pruebas CRUD.",
+        )
+        self.challenge = Reto.objects.create(
+            titulo="Reto CRUD",
+            descripcion="Reto para probar los formularios.",
+            puntos=10,
+            categoria=self.category,
+            respuesta_correcta="10",
+        )
+        self.client.force_login(self.admin)
+
+    def test_all_entities_have_staff_only_list_detail_create_update_and_delete_views(self):
+        self.client.logout()
+        login_response = self.client.get(reverse("gestion-categoria-list"))
+        self.assertRedirects(
+            login_response,
+            f"{reverse('admin:login')}?next={reverse('gestion-categoria-list')}",
+        )
+        regular_user = get_user_model().objects.create_user(
+            username="regular-user",
+            password="test-password",
+        )
+        self.client.force_login(regular_user)
+        self.assertEqual(self.client.get(reverse("gestion-categoria-list")).status_code, 403)
+        self.client.force_login(self.admin)
+
+        solved = RetoResuelto.objects.create(
+            usuario="participante",
+            reto=self.challenge,
+            puntos_obtenidos=10,
+        )
+        submission = Envio.objects.create(
+            reto=self.challenge,
+            usuario="participante",
+            codigo_fuente="print(10)",
+        )
+        records = [
+            ("gestion-categoria", self.category),
+            ("gestion-reto", self.challenge),
+            ("gestion-reto-resuelto", solved),
+            ("gestion-envio", submission),
+        ]
+
+        for prefix, record in records:
+            with self.subTest(entity=prefix):
+                urls = [
+                    reverse(f"{prefix}-list"),
+                    reverse(f"{prefix}-detail", args=[record.pk]),
+                    reverse(f"{prefix}-create"),
+                    reverse(f"{prefix}-update", args=[record.pk]),
+                    reverse(f"{prefix}-delete", args=[record.pk]),
+                ]
+                for url in urls:
+                    self.assertEqual(self.client.get(url).status_code, 200, url)
+
+    def test_model_forms_create_update_and_confirm_deletion_for_every_entity(self):
+        category_data = {
+            "nombre": "Categoría nueva",
+            "descripcion": "Descripción inicial.",
+        }
+        reto_data = {
+            "titulo": "Reto nuevo",
+            "descripcion": "Descripción inicial.",
+            "dificultad": "FACIL",
+            "puntos": 15,
+            "activo": "on",
+            "categoria": self.category.pk,
+            "respuesta_correcta": "15",
+        }
+        solved_data = {
+            "usuario": "participante nuevo",
+            "reto": self.challenge.pk,
+            "puntos_obtenidos": 15,
+        }
+        envio_data = {
+            "reto": self.challenge.pk,
+            "usuario": "participante nuevo",
+            "codigo_fuente": "print(15)",
+            "lenguaje": "python",
+            "estado": "PENDIENTE",
+        }
+        cases = [
+            ("gestion-reto-resuelto", RetoResuelto, solved_data, "usuario", "participante actualizado"),
+            ("gestion-envio", Envio, envio_data, "usuario", "participante actualizado"),
+            ("gestion-reto", Reto, reto_data, "titulo", "Reto actualizado"),
+            ("gestion-categoria", Categoria, category_data, "nombre", "Categoría actualizada"),
+        ]
+
+        for prefix, model, initial_data, changed_field, changed_value in cases:
+            with self.subTest(entity=prefix):
+                created = self.client.post(reverse(f"{prefix}-create"), initial_data)
+                self.assertEqual(created.status_code, 302, created.content.decode())
+                record = model.objects.order_by("-pk").first()
+                detail_url = reverse(f"{prefix}-detail", args=[record.pk])
+                self.assertRedirects(created, detail_url)
+
+                changed_data = {**initial_data, changed_field: changed_value}
+                updated = self.client.post(
+                    reverse(f"{prefix}-update", args=[record.pk]),
+                    changed_data,
+                )
+                self.assertRedirects(updated, detail_url)
+                record.refresh_from_db()
+                self.assertEqual(getattr(record, changed_field), changed_value)
+
+                delete_url = reverse(f"{prefix}-delete", args=[record.pk])
+                self.assertContains(self.client.get(delete_url), "CONFIRMAR ELIMINACIÓN")
+                deleted = self.client.post(delete_url)
+                self.assertRedirects(deleted, reverse(f"{prefix}-list"))
+                self.assertFalse(model.objects.filter(pk=record.pk).exists())
 
 
 class PracticePageTests(TestCase):
@@ -147,7 +302,9 @@ class PracticePageTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(RetoResuelto.objects.exists())
+        self.assertFalse(
+            RetoResuelto.objects.filter(usuario="ricardo", reto=self.challenge).exists()
+        )
         self.assertEqual(Envio.objects.get(reto=self.challenge).estado, "RECHAZADO")
 
     def test_home_and_challenge_selection_link_to_separate_solver_page(self):
@@ -216,7 +373,7 @@ class PracticePageTests(TestCase):
         ana = next(participante for participante in registros if participante["usuario"] == "ANA")
         bruno = next(participante for participante in registros if participante["usuario"] == "Bruno")
 
-        self.assertEqual(len(registros), 2)
+        self.assertGreaterEqual(len(registros), 2)
         self.assertEqual(ana["ejercicios"], 1)
         self.assertEqual(ana["puntos"], 15)
         self.assertIsNotNone(ana["ultima_actividad"])
@@ -405,3 +562,56 @@ class SeededChallengeTests(TestCase):
         self.assertIn("print(7 * numero)", envio.codigo_fuente)
         resolucion = RetoResuelto.objects.get(reto=reto, usuario="alumna")
         self.assertEqual(resolucion.puntos_obtenidos, reto.puntos)
+
+
+class DemoCRUDDataTests(TestCase):
+    def test_demo_categories_submissions_and_resolutions_are_seeded(self):
+        self.assertTrue(Categoria.objects.filter(nombre="Estructuras de datos").exists())
+        self.assertTrue(Categoria.objects.filter(nombre="Matemática y lógica").exists())
+        self.assertEqual(
+            Envio.objects.filter(
+                usuario__in=[
+                    "Ana Rivas",
+                    "Bruno Torres",
+                    "Camila Ortiz",
+                    "Diego Fuentes",
+                    "Elena Mora",
+                ]
+            ).count(),
+            5,
+        )
+        self.assertEqual(
+            RetoResuelto.objects.filter(
+                usuario__in=["ana rivas", "bruno torres", "camila ortiz"]
+            ).count(),
+            3,
+        )
+
+    def test_management_lists_show_details_for_demo_records(self):
+        admin = get_user_model().objects.create_superuser(
+            username="demo-list-admin",
+            email="demo-list-admin@example.com",
+            password="test-password",
+        )
+        self.client.force_login(admin)
+
+        pages = [
+            (
+                "gestion-categoria-list",
+                ["Descripción", "Estructuras de datos"],
+            ),
+            (
+                "gestion-reto-resuelto-list",
+                ["Participante", "Puntos", "ana rivas"],
+            ),
+            (
+                "gestion-envio-list",
+                ["Lenguaje", "Estado", "Ana Rivas", "RECHAZADO", "PENDIENTE"],
+            ),
+        ]
+        for route_name, visible_content in pages:
+            with self.subTest(route=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertEqual(response.status_code, 200)
+                for content in visible_content:
+                    self.assertContains(response, content)

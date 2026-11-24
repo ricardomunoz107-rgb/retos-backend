@@ -1,0 +1,27 @@
+{% extends "retos/crud/base.html" %}
+
+{% block title %}Detalle de {{ model_label|lower }}{% endblock %}
+
+{% block content %}
+    <a class="back-link" href="{% url list_url_name %}">← Volver a {{ section_title|lower }}</a>
+    <section class="crud-panel">
+        <div class="crud-heading detail-heading">
+            <div>
+                <p class="eyebrow">DETALLE DEL REGISTRO</p>
+                <h1>{{ object }}</h1>
+            </div>
+            <div class="crud-actions">
+                <a class="crud-button secondary" href="{% url update_url_name object.pk %}">Editar</a>
+                <a class="crud-button danger" href="{% url delete_url_name object.pk %}">Eliminar</a>
+            </div>
+        </div>
+        <dl class="detail-grid">
+            {% for row in detail_rows %}
+                <div class="detail-row">
+                    <dt>{{ row.label }}</dt>
+                    <dd>{{ row.value|linebreaksbr }}</dd>
+                </div>
+            {% endfor %}
+        </dl>
+    </section>
+{% endblock %}

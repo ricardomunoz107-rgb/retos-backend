@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestión{% endblock %} | retos.</title>
+    <link rel="stylesheet" href="{% static 'retos/css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="{% url 'home' %}" aria-label="Ir al inicio">
+            <span class="brand-mark">R</span>
+            <span>retos<span class="brand-dot">.</span></span>
+        </a>
+        <nav class="top-nav" aria-label="Navegación principal">
+            <a class="nav-link" href="{% url 'home' %}">Inicio</a>
+            <a class="nav-link" href="{% url 'jugar' %}">Jugar retos</a>
+            <a class="nav-link" href="{% url 'gestion-categoria-list' %}">Categorías</a>
+            <a class="nav-link" href="{% url 'gestion-reto-list' %}">Retos</a>
+            <a class="nav-link" href="{% url 'gestion-reto-resuelto-list' %}">Resueltos</a>
+            <a class="nav-link" href="{% url 'gestion-envio-list' %}">Envíos</a>
+        </nav>
+    </header>
+    <main class="page-shell crud-shell">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="site-footer">
+        <span>© 2026 retos.</span>
+        <span>Administración de la plataforma</span>
+    </footer>
+</body>
+</html>

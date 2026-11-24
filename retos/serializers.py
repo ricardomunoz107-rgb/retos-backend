@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Categoria, Envio, Reto
+from .models import Categoria, Envio, Reto, RetoResuelto
 
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -23,4 +23,12 @@ class EnvioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Envio
+        fields = '__all__'
+
+
+class RetoResueltoSerializer(serializers.ModelSerializer):
+    reto_titulo = serializers.ReadOnlyField(source='reto.titulo')
+
+    class Meta:
+        model = RetoResuelto
         fields = '__all__'

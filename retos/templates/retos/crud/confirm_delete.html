@@ -1,0 +1,17 @@
+{% extends "retos/crud/base.html" %}
+
+{% block title %}Eliminar {{ model_label|lower }}{% endblock %}
+
+{% block content %}
+    <a class="back-link" href="{% url list_url_name %}">← Volver a {{ section_title|lower }}</a>
+    <section class="crud-panel delete-panel">
+        <p class="eyebrow">CONFIRMAR ELIMINACIÓN</p>
+        <h1>Eliminar {{ model_label|lower }}</h1>
+        <p>¿Confirmas que deseas eliminar <strong>{{ object }}</strong>? Esta acción no se puede deshacer.</p>
+        <form method="post" class="crud-actions">
+            {% csrf_token %}
+            <button class="crud-button danger" type="submit">Sí, eliminar</button>
+            <a class="crud-button secondary" href="{% url detail_url_name object.pk %}">Cancelar</a>
+        </form>
+    </section>
+{% endblock %}
